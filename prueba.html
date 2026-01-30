@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>VocabFactory Pro | IA Language Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .active-tab {
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .active-tab svg {
+            stroke: var(--primary);
+            fill: rgba(99, 102, 241, 0.1);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .loader {
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .word-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .word-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Custom Scrollbar */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .img-placeholder {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        #word:hover,
+        #example:hover {
+            color: #4f46e5;
+            /* indigo */
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 bg-slate-100">
+
+    <div
+        class="w-full max-w-md bg-white sm:rounded-[3rem] shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col h-screen sm:h-[840px] relative border border-white">
+
+        <!-- HEADER -->
+        <header class="px-6 pt-8 pb-4 shrink-0 glass sticky top-0 z-30 border-b border-slate-50">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                        Vocab<span class="text-indigo-600">Factory</span>
+                        <span
+                            class="bg-indigo-100 text-indigo-600 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Pro</span>
+                    </h1>
+                    <p id="stats-summary"
+                        class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
+                        Cargando estadísticas...
+                    </p>
+                </div>
+                <div class="relative group">
+                    <div
+                        class="h-11 w-11 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 overflow-y-auto p-6 hide-scrollbar pb-32">
+
+            <!-- FACTORY SECTION -->
+            <div id="section-factory" class="space-y-6 animate-slide-up">
+                <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
+                    <div class="relative z-10">
+                        <h3 class="font-bold text-2xl mb-2">Generador IA</h3>
+                        <p class="text-slate-400 text-sm mb-6 leading-relaxed">
+                            Escribe un tema y la IA creará una lista maestra con definiciones e imágenes.
+                        </p>
+
+                        <div class="space-y-3">
+                            <input id="ai-topic" type="text" placeholder="Ej: Viaje a Japón, Cocina Italiana..."
+                                class="w-full p-4 rounded-2xl bg-white/10 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+
+                            <button onclick="generateList()" id="btn-generate"
+                                class="w-full bg-indigo-500 hover:bg-indigo-400 text-white p-4 rounded-2xl font-bold text-sm shadow-xl shadow-indigo-900/20 active:scale-95 transition-all flex items-center justify-center gap-3">
+                                <span id="btn-text">Generar con IA</span>
+                                <div id="gen-loader" class="loader hidden !border-white/20 !border-t-white"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl"></div>
+                </div>
+
+                <div id="factory-result" class="hidden space-y-6 animate-slide-up">
+                    <div class="flex justify-between items-center px-2">
+                        <h4 class="font-bold text-slate-800">Sugerencias</h4>
+                        <button onclick="saveCurrentList()"
+                            class="text-xs bg-emerald-500 hover:bg-emerald-400 text-white px-5 py-2.5 rounded-full font-bold shadow-lg shadow-emerald-100 transition-all active:scale-95">
+                            Guardar todo
+                        </button>
+                    </div>
+                    <div id="result-items" class="grid grid-cols-1 gap-3"></div>
+                </div>
+            </div>
+
+            <!-- LIBRARY SECTION -->
+            <div id="section-library" class="hidden animate-slide-up space-y-4">
+                <div id="library-main-view" class="space-y-6">
+                    <div class="flex justify-between items-center px-1">
+                        <h3 class="text-xl font-bold text-slate-800">Tus Listas</h3>
+                        <button onclick="createNewEmptyList()"
+                            class="text-xs bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 transition-colors shadow-sm">
+                            + Manual
+                        </button>
+                    </div>
+                    <div id="library-list" class="grid grid-cols-1 gap-4"></div>
+                </div>
+
+                <div id="library-edit-view" class="hidden space-y-6">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- LEARN SECTION -->
+            <div id="section-learn" class="hidden animate-slide-up min-h-full flex flex-col">
+                <div id="learn-empty"
+                    class="flex-1 flex flex-col items-center justify-center text-center py-20 space-y-6">
+                    <div
+                        class="w-24 h-24 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-4xl shadow-inner">
+                        🎯</div>
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800">¡Todo al día!</h3>
+                        <p class="text-slate-400 text-sm mt-1 max-w-[200px] mx-auto">No tienes palabras pendientes de
+                            repaso hoy.</p>
+                    </div>
+                    <button onclick="showTab('factory')"
+                        class="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100">Crear
+                        contenido</button>
+                </div>
+
+                <div id="learn-container" class="hidden space-y-6 flex-1">
+                    <div id="card-inner"
+                        class="bg-white border border-slate-100 rounded-[3rem] p-8 text-center min-h-[420px] flex flex-col justify-between shadow-xl shadow-slate-200/50 relative overflow-hidden">
+                        <div id="study-progress-bar"
+                            class="absolute top-0 left-0 h-2 bg-indigo-500 transition-all duration-500"
+                            style="width: 0%"></div>
+
+                        <div class="pt-4">
+                            <div id="card-image-container"
+                                class="w-full h-40 rounded-3xl mb-6 overflow-hidden img-placeholder hidden">
+                                <img id="card-img" src="" class="w-full h-full object-cover">
+                            </div>
+                            <h2 id="word" class="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">...</h2>
+                            <p id="tap-hint"
+                                class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-4">Toca para
+                                revelar</p>
+                        </div>
+
+                        <div id="card-answer" class="hidden space-y-6 animate-slide-up pb-4">
+                            <p id="translation"
+                                class="text-2xl text-indigo-600 font-bold bg-indigo-50 inline-block px-6 py-2 rounded-2xl">
+                                ...</p>
+                            <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                                <p id="example" onclick="toggleExampleTranslation()"
+                                    class="cursor-pointer italic text-slate-600 select-none">
+                                </p>
+
+                                <p id="example-translation" class="hidden mt-2 text-sm text-slate-400">
+                                </p>
+
+                            </div>
+                        </div>
+
+                        <div id="click-overlay" onclick="revealCard()" class="absolute inset-0 z-10 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div id="rating-controls" class="hidden grid grid-cols-3 gap-3">
+                        <button onclick="rateWord(1)"
+                            class="bg-white border-2 border-slate-50 text-rose-500 p-5 rounded-[2rem] font-bold text-xs shadow-sm active:scale-95 transition-all">DIFÍCIL</button>
+                        <button onclick="rateWord(3)"
+                            class="bg-white border-2 border-slate-50 text-amber-500 p-5 rounded-[2rem] font-bold text-xs shadow-sm active:scale-95 transition-all">BIEN</button>
+                        <button onclick="rateWord(5)"
+                            class="bg-indigo-600 text-white p-5 rounded-[2rem] font-bold text-xs shadow-lg shadow-indigo-100 active:scale-95 transition-all">FÁCIL</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUIZ SECTION -->
+            <div id="section-quiz" class="hidden animate-slide-up min-h-full flex flex-col">
+
+                <div class="flex-1 space-y-6">
+
+                    <!-- Progress -->
+                    <div
+                        class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase tracking-wider">
+                        <span id="quiz-progress-text">Pregunta 1 de 10</span>
+                        <span id="quiz-errors-text">Errores: 0</span>
+                    </div>
+
+                    <!-- Quiz Card -->
+                    <div
+                        class="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-xl shadow-slate-200/50 space-y-8">
+
+                        <!-- Spanish Prompt -->
+                        <div class="space-y-3 text-center">
+                            <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">
+                                Traduce al inglés
+                            </p>
+
+                            <h2 id="quiz-word-es" class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                                ...
+                            </h2>
+
+                            <p id="quiz-example-es" class="text-sm text-slate-500 italic">
+                                ...
+                            </p>
+                        </div>
+
+                        <!-- Inputs -->
+                        <div class="space-y-4">
+                            <input id="quiz-word-input" type="text" placeholder="Palabra o frase en inglés"
+                                class="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+
+                            <textarea id="quiz-example-input" rows="3" placeholder="Ejemplo completo en inglés"
+                                class="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <!-- Feedback -->
+                        <div id="quiz-feedback" class="hidden rounded-2xl p-4 text-sm">
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button id="quiz-submit-btn" onclick="submitQuizAnswer()"
+                                class="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100 active:scale-95 transition-all">
+                                Comprobar
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- SETTINGS SECTION -->
+            <div id="section-settings" class="hidden animate-slide-up space-y-8">
+                <h3 class="text-2xl font-bold text-slate-800 px-1">Ajustes</h3>
+                <div class="bg-white rounded-[2.5rem] p-2 shadow-sm border border-slate-100">
+                    <button onclick="exportLibrary()"
+                        class="w-full hover:bg-slate-50 p-5 rounded-[2rem] flex items-center justify-between group transition-all">
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center text-lg">📥</span>
+                            <span class="font-bold text-slate-700 text-sm">Exportar Backup</span>
+                        </div>
+                        <svg class="w-5 h-5 text-slate-300 group-hover:text-slate-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    <label
+                        class="w-full hover:bg-slate-50 p-5 rounded-[2rem] flex items-center justify-between group transition-all cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center text-lg">📤</span>
+                            <span class="font-bold text-slate-700 text-sm">Importar JSON</span>
+                            <input id="import-file" type="file" accept=".json" class="hidden"
+                                onchange="importLibrary(event)">
+                        </div>
+                        <svg class="w-5 h-5 text-slate-300 group-hover:text-slate-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </label>
+                </div>
+                <button onclick="clearAllData()"
+                    class="w-full text-rose-500 p-5 rounded-[2rem] font-bold text-xs uppercase tracking-widest border-2 border-rose-50 hover:bg-rose-50 transition-all">Borrar
+                    Datos Permanentemente</button>
+            </div>
+
+        </main>
+
+        <!-- NAVIGATION -->
+        <nav
+            class="fixed bottom-0 left-0 right-0 sm:absolute glass border-t border-slate-100 px-8 py-4 flex justify-between items-center z-50 rounded-t-[2.5rem] sm:rounded-none">
+            <button onclick="showTab('factory')" id="tab-factory"
+                class="flex flex-col items-center gap-1.5 text-slate-400 transition-all hover:text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="text-[9px] font-extrabold uppercase tracking-tighter">Crear</span>
+            </button>
+            <button onclick="showTab('library')" id="tab-library"
+                class="flex flex-col items-center gap-1.5 text-slate-400 transition-all hover:text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span class="text-[9px] font-extrabold uppercase tracking-tighter">Listas</span>
+            </button>
+            <button onclick="showTab('learn')" id="tab-learn"
+                class="flex flex-col items-center gap-1.5 text-slate-400 transition-all hover:text-indigo-600 relative">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span class="text-[9px] font-extrabold uppercase tracking-tighter">Repaso</span>
+                <span id="badge-due"
+                    class="hidden absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] flex items-center justify-center rounded-full border-2 border-white font-bold">0</span>
+            </button>
+            <button onclick="showTab('quiz')" id="tab-quiz"
+                class="flex flex-col items-center gap-1.5 text-slate-400 transition-all hover:text-indigo-600">
+
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <!-- Hoja -->
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                    <!-- Líneas -->
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h3" />
+                </svg>
+
+                <span class="text-[9px] font-extrabold uppercase tracking-tighter">
+                    Quiz
+                </span>
+            </button>
+
+
+            <button onclick="showTab('settings')" id="tab-settings"
+                class="flex flex-col items-center gap-1.5 text-slate-400 transition-all hover:text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                </svg>
+                <span class="text-[9px] font-extrabold uppercase tracking-tighter">Ajustes</span>
+            </button>
+        </nav>
+
+        <!-- MODAL -->
+        <div id="modal-overlay"
+            class="fixed inset-0 bg-slate-900/40 hidden z-[100] flex items-center justify-center p-6 backdrop-blur-md transition-all">
+            <div
+                class="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl animate-slide-up border border-slate-50">
+                <h3 id="modal-title" class="text-2xl font-bold text-slate-800 tracking-tight"></h3>
+                <div id="modal-content" class="text-slate-500 text-sm leading-relaxed"></div>
+                <div id="modal-actions" class="flex gap-3 justify-end pt-4"></div>
+            </div>
+        </div>
+        <div id="study-mode-modal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-xl">
+
+                <h2 class="text-lg font-extrabold text-slate-800">
+                    ¿Cómo quieres estudiar?
+                </h2>
+
+                <p class="text-sm text-slate-500">
+                    Elige el modo para esta lista
+                </p>
+
+                <div class="space-y-3 pt-2">
+                    <button onclick="startCardsStudy()"
+                        class="w-full py-3 rounded-2xl bg-indigo-600 text-white font-bold">
+                        🃏 Cards
+                    </button>
+
+                    <button onclick="startQuizStudy()"
+                        class="w-full py-3 rounded-2xl bg-slate-100 text-slate-800 font-bold">
+                        ✍️ Quiz
+                    </button>
+                </div>
+
+                <button onclick="closeStudyModeModal()" class="w-full text-sm text-slate-400 pt-2">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="prueba.js"></script>
+</body>
+
+</html>
