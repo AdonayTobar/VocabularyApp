@@ -1,6 +1,6 @@
 
 /* CONFIG */
-const apiKey = "AIzaSyA9IvlGyhI-PMZEOKItkR5US5kFHh3SPLY"; // La IA inyectará esto en tiempo de ejecución
+const apiKey = "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"; // La IA inyectará esto en tiempo de ejecución
 const TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
 const IMAGE_MODEL = "imagen-4.0-generate-001";
 
@@ -101,23 +101,23 @@ No incluyas texto fuera del JSON.
 `;
 
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        temperature: 0.8,
-                        responseMimeType: "application/json"
-                    }
-                })
-            }
-        );
+const response = await fetch("https://api.groq.com/v1/generate", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}` // tu API Key de Groq
+    },
+    body: JSON.stringify({
+        model: "mixtral-8x7b-instruct", // modelo Groq, gratuito
+        prompt: prompt,
+        max_output_tokens: 1500,
+        temperature: 0.8
+    })
+});
 
-        const data = await response.json();
-        const result = JSON.parse(data.candidates[0].content.parts[0].text);
+const data = await response.json();
+const result = JSON.parse(data.text); // Groq devuelve el JSON directamente en "text"
+
 
         tempGeneratedItems = (result.items || []).map(item => ({
             id: crypto.randomUUID(),
@@ -909,4 +909,5 @@ function submitQuizAnswer() {
 document.addEventListener('DOMContentLoaded', () => {
     showTab('factory');
 });
+
 
