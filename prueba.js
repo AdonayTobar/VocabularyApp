@@ -1,6 +1,6 @@
 
 /* CONFIG */
-const apiKey = ""; // La IA inyectará esto en tiempo de ejecución
+const apiKey = "AIzaSyA9IvlGyhI-PMZEOKItkR5US5kFHh3SPLY"; // La IA inyectará esto en tiempo de ejecución
 const TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
 const IMAGE_MODEL = "imagen-4.0-generate-001";
 
@@ -909,3 +909,4 @@ function submitQuizAnswer() {
 document.addEventListener('DOMContentLoaded', () => {
     showTab('factory');
 });
+
